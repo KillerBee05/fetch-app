@@ -9,6 +9,8 @@ import router from './router';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
+import Toast from 'primevue/toast';
+import ToastService from 'primevue/toastservice';
 
 import Aura from '@primevue/themes/aura';
 
@@ -19,10 +21,11 @@ app.use(PrimeVue, {
     preset: Aura
   }
 });
-
+app.use(ToastService);
 app.component('Button', Button);
 app.component('InputText', InputText);
 app.component('Password', Password);
+app.component('Toast', Toast);
 
 app.use(createPinia());
 app.use(router);

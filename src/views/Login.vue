@@ -48,19 +48,16 @@ const name = ref('')
 const email = ref('')
 const errorMessage = ref('')
 
-
-
 const handleLogin = async () => {
   if(!name.value || !email.value) {
     errorMessage.value = 'Please enter both name and email'
     return 
   }
-
   try {
     await userStore.login(name.value, email.value)
     router.push('/')
   } catch (error) {
-    
+    throw error
   }
 }
 </script>
