@@ -10,9 +10,28 @@ export interface UserStore {
 }
 
 export interface DogStore {
+  dogs: Dog[];
+  breeds: string[];
   isLoading: boolean;
-  dogs?: Dog[];
-  fetchDogs: () => void;
+  totalDogs: number;
+  currentPage: number;
+  fetchBreeds: () => Promise<string[]>;
+  searchDogs: (params?: {
+    breeds?: string[];
+    ageMin?: number;
+    ageMax?: number;
+    size?: number;
+    from?: number;
+    page?: number;
+    sort?: string;
+  }) => Promise<{
+    dogs: Dog[];
+    total: number;
+    next?: string;
+    prev?: string;
+    currentPage: number;
+  }>;
+  setCurrentPage: (page: number) => void;
 }
 
 export interface Dog {
@@ -20,4 +39,6 @@ export interface Dog {
   breed: string;
   name: string;
   age: number;
+  zip_code: string;
+  img: string;
 }
