@@ -53,9 +53,10 @@ export const useDogStore = defineStore('dog', () => {
     isLoading.value = true
     try {
       const searchParams = buildSearchParams(params)
-  
-      const batchSize = 100
+      const pageSize = params?.size || 20
+      
       if (params?.state || params?.city) {
+        
         const { zipCodes: locationZipCodes } = await locationStore.searchLocations({
           state: params?.state || undefined,
           city: params?.city || undefined
@@ -66,6 +67,10 @@ export const useDogStore = defineStore('dog', () => {
         }
   
         let allDogIds: string[] = []
+        const batchSize = 100
+
+        searchParams.delete('size')
+        searchParams.delete('from')
 
         for (let i = 0; i < locationZipCodes.length; i += batchSize) {
           const batchZipCodes = locationZipCodes.slice(i, i + batchSize)
@@ -77,9 +82,7 @@ export const useDogStore = defineStore('dog', () => {
   
           const searchResults = await api.get<{ 
             resultIds: string[], 
-            total: number, 
-            next?: string, 
-            prev?: string 
+            total: number
           }>(`/dogs/search?${batchSearchParams.toString()}`)
   
           if (searchResults.resultIds?.length) {
@@ -90,23 +93,23 @@ export const useDogStore = defineStore('dog', () => {
         if (allDogIds.length === 0) {
           return createEmptySearchResults()
         }
-  
-        let allDogDetails: Dog[] = []
+
         const uniqueDogIds = [...new Set(allDogIds)]
-        for (let i = 0; i < uniqueDogIds.length; i += batchSize) {
-          const batchDogIds = uniqueDogIds.slice(i, i + batchSize)
-          const batchDogDetails = await api.post<Dog[]>('/dogs', batchDogIds)
-          allDogDetails.push(...batchDogDetails)
-        }
-  
-        dogs.value = await locationStore.enrichDogsWithLocations(allDogDetails)
-        totalDogs.value = allDogDetails.length
+        const total = uniqueDogIds.length
+
+        const startIndex = ((params?.page || 1) - 1) * pageSize
+        const endIndex = startIndex + pageSize
+        const paginatedDogIds = uniqueDogIds.slice(startIndex, endIndex)
+
+        const dogDetails = await api.post<Dog[]>('/dogs', paginatedDogIds)
+        dogs.value = await locationStore.enrichDogsWithLocations(dogDetails)
+        totalDogs.value = total
   
         return {
           dogs: dogs.value,
           total: totalDogs.value,
-          next: null,
-          prev: null,
+          next: endIndex < total ? String(currentPage.value + 1) : null,
+          prev: currentPage.value > 1 ? String(currentPage.value - 1) : null,
           currentPage: currentPage.value,
           noResults: false
         }
@@ -123,16 +126,8 @@ export const useDogStore = defineStore('dog', () => {
         return createEmptySearchResults()
       }
   
-      let allDogDetails: Dog[] = []
-      const uniqueDogIds = [...new Set(searchResults.resultIds)]
-      
-      for (let i = 0; i < uniqueDogIds.length; i += 100) {
-        const batchDogIds = uniqueDogIds.slice(i, i + 100)
-        const batchDogDetails = await api.post<Dog[]>('/dogs', batchDogIds)
-        allDogDetails.push(...batchDogDetails)
-      }
-  
-      dogs.value = await locationStore.enrichDogsWithLocations(allDogDetails)
+      const dogDetails = await api.post<Dog[]>('/dogs', searchResults.resultIds)
+      dogs.value = await locationStore.enrichDogsWithLocations(dogDetails)
       totalDogs.value = searchResults.total
   
       return {
