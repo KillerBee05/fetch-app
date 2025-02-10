@@ -23,12 +23,14 @@ export interface Dog {
 
 export interface SearchParams {
   breeds?: string[]
-  state?: string | null
-  city?: string | null
   ageMin?: number
   ageMax?: number
-  size?: number
+  state?: string
+  city?: string
   page?: number
+  size?: number
+  sortField?: 'breed' | 'name' | 'age'
+  sortOrder?: 'asc' | 'desc'
 }
 
 export interface SearchResults {

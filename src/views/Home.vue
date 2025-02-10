@@ -1,22 +1,8 @@
 <template>
   <div class="container mx-auto p-4">
     <h2 class="text-2xl font-bold mb-6">Dog Search</h2>
-    
-    <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
-      <div class="relative">
-        <Dropdown 
-          v-model="selectedBreed" 
-          :options="dogStore.breeds" 
-          placeholder="Select Breed"
-          class="w-full"
-        />
-        <Button 
-          v-if="selectedBreed" 
-          icon="pi pi-times" 
-          class="p-button-text absolute right-8 top-1/2 transform -translate-y-1/2"
-          @click="clearBreed"
-        />
-      </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <div class="relative">
         <Dropdown 
           v-model="selectedState" 
@@ -41,6 +27,7 @@
           placeholder="Select City (Optional)"
           class="w-full"
           :disabled="!selectedState"
+          @change="handleCityChange"
         />
         <Button 
           v-if="selectedCity" 
@@ -49,30 +36,79 @@
           @click="clearCity"
         />
       </div>
-      <div class="flex items-center space-x-2">
-        <InputNumber 
-          v-model="ageMin" 
-          placeholder="Min Age" 
-          class="w-full"
-        />
-        <Button 
-          v-if="ageMin !== null" 
-          icon="pi pi-times" 
-          class="p-button-text"
-          @click="clearMinAge"
-        />
+    </div>
+
+    <div class="border rounded-lg p-4 mb-6 bg-gray-50">
+      <h3 class="text-lg font-semibold mb-4">Additional Filters</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="relative">
+          <Dropdown 
+            v-model="selectedBreed" 
+            :options="dogStore.breeds" 
+            placeholder="Select Breed"
+            class="w-full"
+          />
+          <Button 
+            v-if="selectedBreed" 
+            icon="pi pi-times" 
+            class="p-button-text absolute right-8 top-1/2 transform -translate-y-1/2"
+            @click="clearBreed"
+          />
+        </div>
+        <div class="flex items-center space-x-2">
+          <InputNumber 
+            v-model="ageMin" 
+            placeholder="Min Age" 
+            class="w-full"
+          />
+          <Button 
+            v-if="ageMin !== null" 
+            icon="pi pi-times" 
+            class="p-button-text"
+            @click="clearMinAge"
+          />
+        </div>
+        <div class="flex items-center space-x-2">
+          <InputNumber 
+            v-model="ageMax" 
+            placeholder="Max Age" 
+            class="w-full"
+          />
+          <Button 
+            v-if="ageMax !== null" 
+            icon="pi pi-times" 
+            class="p-button-text"
+            @click="clearMaxAge"
+          />
+        </div>
+        <div class="flex justify-end md:col-span-2">
+          <Button 
+            label="Apply Filters" 
+            icon="pi pi-filter"
+            @click="applyFilters"
+            class="p-button-primary"
+          />
+        </div>
       </div>
-      <div class="flex items-center space-x-2">
-        <InputNumber 
-          v-model="ageMax" 
-          placeholder="Max Age" 
-          class="w-full"
+    </div>
+
+    <div class="flex flex-wrap gap-4 mb-6 items-center">
+      <span class="font-medium">Sort by:</span>
+      <div class="flex gap-2">
+        <Button 
+          :label="getSortLabel('name')"
+          :class="{ 'p-button-outlined': sortField !== 'name' }"
+          @click="handleSort('name')"
         />
         <Button 
-          v-if="ageMax !== null" 
-          icon="pi pi-times" 
-          class="p-button-text"
-          @click="clearMaxAge"
+          :label="getSortLabel('breed')"
+          :class="{ 'p-button-outlined': sortField !== 'breed' }"
+          @click="handleSort('breed')"
+        />
+        <Button 
+          :label="getSortLabel('age')"
+          :class="{ 'p-button-outlined': sortField !== 'age' }"
+          @click="handleSort('age')"
         />
       </div>
     </div>
@@ -128,7 +164,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useDogStore } from '@/stores/dog-store'
 import { useLocationStore } from '@/stores/location-store'
 import Dropdown from 'primevue/dropdown'
@@ -148,9 +184,16 @@ const ageMin = ref<number | null>(null)
 const ageMax = ref<number | null>(null)
 const isLoading = ref(false)
 const noResults = ref(false)
+const sortField = ref<'name' | 'breed' | 'age' | null>(null)
+const sortOrder = ref<'asc' | 'desc'>('asc')
 
 const availableStates = computed(() => locationStore.getAvailableStates)
 const availableCities = computed(() => locationStore.getAvailableCitiesForState)
+
+const getSortLabel = (field: 'name' | 'breed' | 'age') => {
+  if (sortField.value !== field) return field.charAt(0).toUpperCase() + field.slice(1)
+  return `${field.charAt(0).toUpperCase() + field.slice(1)} ${sortOrder.value === 'asc' ? '↑' : '↓'}`
+}
 
 const getNoResultsMessage = () => {
   if (selectedCity.value) {
@@ -173,10 +216,12 @@ const clearState = () => {
   selectedState.value = null
   selectedCity.value = null
   locationStore.selectedState = ''
+  fetchDogs()
 }
 
 const clearCity = () => {
   selectedCity.value = null
+  fetchDogs()
 }
 
 const clearMinAge = () => {
@@ -191,12 +236,40 @@ const handleStateChange = async () => {
   selectedCity.value = null
   if (selectedState.value) {
     locationStore.selectedState = selectedState.value
+    fetchDogs()
   }
+}
+
+const handleCityChange = () => {
+  fetchDogs()
+}
+
+const handleSort = (field: 'name' | 'breed' | 'age') => {
+  console.log('Sort clicked:', { field, currentSort: sortField.value, currentOrder: sortOrder.value })
+  if (sortField.value === field) {
+    if (sortOrder.value === 'desc') {
+      sortField.value = null
+      sortOrder.value = 'asc'
+    } else {
+      sortOrder.value = 'desc'
+    }
+  } else {
+    sortField.value = field
+    sortOrder.value = 'asc'
+  }
+
+  fetchDogs()
 }
 
 const fetchDogs = async (page?: number) => {
   isLoading.value = true
   try {
+    console.log('Fetching dogs with params:', {
+      breed: selectedBreed.value,
+      state: selectedState.value,
+      sortField: sortField.value,
+      sortOrder: sortOrder.value
+    })
     const results = await dogStore.searchDogs({
       breeds: selectedBreed.value ? [selectedBreed.value] : undefined,
       ageMin: ageMin.value ?? undefined,
@@ -204,11 +277,14 @@ const fetchDogs = async (page?: number) => {
       state: selectedState.value ?? undefined,
       city: selectedCity.value ?? undefined,
       page: page ? page + 1 : 1,
-      size: 20
+      size: 20,
+      sortField: sortField.value ?? undefined,
+      sortOrder: sortOrder.value
     })
     
     dogStore.dogs = results.dogs
     noResults.value = results.noResults
+
   } catch (error) {
     console.error('Error fetching dogs:', error)
     noResults.value = true
@@ -218,12 +294,9 @@ const fetchDogs = async (page?: number) => {
   }
 }
 
-watch(
-  [selectedBreed, selectedState, selectedCity, ageMin, ageMax],
-  async () => {
-    await fetchDogs()
-  }
-)
+const applyFilters = () => {
+  fetchDogs()
+}
 
 onMounted(async () => {
   await dogStore.fetchBreeds()
