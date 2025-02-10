@@ -150,7 +150,7 @@ const isLoading = ref(false)
 const noResults = ref(false)
 
 const availableStates = computed(() => locationStore.getAvailableStates)
-const availableCities = ref<string[]>([])
+const availableCities = computed(() => locationStore.getAvailableCitiesForState)
 
 const getNoResultsMessage = () => {
   if (selectedCity.value) {
@@ -172,7 +172,7 @@ const clearBreed = () => {
 const clearState = () => {
   selectedState.value = null
   selectedCity.value = null
-  availableCities.value = []
+  locationStore.selectedState = ''
 }
 
 const clearCity = () => {
@@ -190,9 +190,7 @@ const clearMaxAge = () => {
 const handleStateChange = async () => {
   selectedCity.value = null
   if (selectedState.value) {
-    availableCities.value = await locationStore.getAvailableCitiesForState(selectedState.value)
-  } else {
-    availableCities.value = []
+    locationStore.selectedState = selectedState.value
   }
 }
 
@@ -206,10 +204,10 @@ const fetchDogs = async (page?: number) => {
       state: selectedState.value ?? undefined,
       city: selectedCity.value ?? undefined,
       page: page ? page + 1 : 1,
-      size: 25
+      size: 20
     })
     
-    dogStore.dogs = results.noResults ? [] : dogStore.dogs
+    dogStore.dogs = results.dogs
     noResults.value = results.noResults
   } catch (error) {
     console.error('Error fetching dogs:', error)

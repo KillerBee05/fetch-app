@@ -2,32 +2,68 @@ import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 import api from "@/utils/api-helper"
 import { states } from '@/data/states'
-import type { Location, LocationSearchResponse, Dog } from "@/types/interfaces"
+import type { Location, Dog } from "@/types/interfaces"
 
 export const useLocationStore = defineStore('location', () => {
   const isLoading = ref(false)
+  const selectedState = ref<string>('')
+  const locationCache = ref<Map<string, { cities: string[], zipCodes: string[] }>>(new Map())
 
   const getAvailableStates = computed(() => 
     states.sort((a, b) => a.name.localeCompare(b.name))
   )
 
-  const getAvailableCitiesForState = async (state: string): Promise<string[]> => {
-    if (!state) return []
+  const getAvailableCitiesForState = computed(() => {
+    if(!selectedState.value) return []
+    return locationCache.value.get(selectedState.value)?.cities || []
+  })
+
+  const searchLocations = async (params: { state?: string, city?: string }): Promise<{ 
+    zipCodes: string[], 
+    cities: string[] 
+  }> => {
+    if (!params.state && !params.city) return { zipCodes: [], cities: [] }
+
+    if (params.state && !params.city && locationCache.value.has(params.state)) {
+      return locationCache.value.get(params.state)!
+    }
+
+    const locationSearchBody: Record<string, any> = {
+      size: 10000
+    }
     
+    if (params.state) {
+      locationSearchBody.states = [params.state]
+    }
+    if (params.city) {
+      locationSearchBody.city = params.city
+    }
+
     try {
-      const response = await api.post<LocationSearchResponse>('/locations/search', {
-        states: [state],
-        size: 10000
-      })
-      
-      return [...new Set(
-        response.results
-          .map(loc => loc.city)
-          .filter((city): city is string => !!city)
-      )].sort()
+      const response = await api.post<{ 
+        results: { zip_code: string, city: string }[], 
+        total: number 
+      }>('/locations/search', locationSearchBody)
+
+      const result = {
+        zipCodes: [...new Set(
+          response.results.map(location => location.zip_code)
+        )],
+        cities: [...new Set(
+          response.results
+            .map(loc => loc.city)
+            .filter((city): city is string => !!city)
+        )].sort()
+      }
+
+      if (params.state && !params.city) {
+        locationCache.value.set(params.state, result)
+      }
+
+      return result
     } catch (error) {
-      console.error('Error fetching cities:', error)
-      return []
+      console.error('Location search error:', error)
+      return { zipCodes: [], cities: [] }
     }
   }
 
@@ -70,8 +106,10 @@ export const useLocationStore = defineStore('location', () => {
 
   return {
     isLoading,
+    selectedState,
     getAvailableStates,
     getAvailableCitiesForState,
+    searchLocations,
     enrichDogsWithLocations
   }
 })

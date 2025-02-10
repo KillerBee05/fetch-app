@@ -27,7 +27,7 @@ export const useDogStore = defineStore('dog', () => {
   const buildSearchParams = (params?: SearchParams): URLSearchParams => {
     const searchParams = new URLSearchParams()
     
-    searchParams.append('size', String(params?.size || 25))
+    searchParams.append('size', String(params?.size || 20))
     searchParams.append('sort', 'breed:asc')
 
     params?.breeds?.forEach(breed => {
@@ -49,71 +49,92 @@ export const useDogStore = defineStore('dog', () => {
     return searchParams
   }
 
-  const searchLocations = async (params: SearchParams): Promise<string[]> => {
-    if (!params.state && !params.city) return []
-
-    const locationSearchBody: Record<string, any> = {}
-    
-    if (params.state) {
-      locationSearchBody.states = [params.state]
-    }
-    if (params.city) {
-      locationSearchBody.city = params.city
-    }
-
-    try {
-      const locationResponse = await api.post<{ results: { zip_code: string }[], total: number }>(
-        '/locations/search', 
-        { 
-          ...locationSearchBody, 
-          size: 10000 
-        }
-      )
-
-      const locationZipCodes = [...new Set(
-        locationResponse.results.map(location => location.zip_code)
-      )]
-
-      return locationZipCodes.slice(0, 100)
-    } catch (error) {
-      console.error('Location search error:', error)
-      return []
-    }
-  }
-
   const searchDogs = async (params?: SearchParams): Promise<SearchResults> => {
     isLoading.value = true
     try {
       const searchParams = buildSearchParams(params)
-
-      const locationZipCodes = await searchLocations(params || {})
-
-      if ((params?.state || params?.city) && locationZipCodes.length === 0) {
-        return createEmptySearchResults()
-      }
-
-      if (locationZipCodes.length > 0) {
-        locationZipCodes.forEach(zipCode => {
-          searchParams.append('zipCodes', zipCode)
+  
+      const batchSize = 100
+      if (params?.state || params?.city) {
+        const { zipCodes: locationZipCodes } = await locationStore.searchLocations({
+          state: params?.state || undefined,
+          city: params?.city || undefined
         })
+  
+        if (locationZipCodes.length === 0) {
+          return createEmptySearchResults()
+        }
+  
+        let allDogIds: string[] = []
+
+        for (let i = 0; i < locationZipCodes.length; i += batchSize) {
+          const batchZipCodes = locationZipCodes.slice(i, i + batchSize)
+          const batchSearchParams = new URLSearchParams(searchParams)
+          
+          batchZipCodes.forEach(zipCode => {
+            batchSearchParams.append('zipCodes', zipCode)
+          })
+  
+          const searchResults = await api.get<{ 
+            resultIds: string[], 
+            total: number, 
+            next?: string, 
+            prev?: string 
+          }>(`/dogs/search?${batchSearchParams.toString()}`)
+  
+          if (searchResults.resultIds?.length) {
+            allDogIds.push(...searchResults.resultIds)
+          }
+        }
+  
+        if (allDogIds.length === 0) {
+          return createEmptySearchResults()
+        }
+  
+        let allDogDetails: Dog[] = []
+        const uniqueDogIds = [...new Set(allDogIds)]
+        for (let i = 0; i < uniqueDogIds.length; i += batchSize) {
+          const batchDogIds = uniqueDogIds.slice(i, i + batchSize)
+          const batchDogDetails = await api.post<Dog[]>('/dogs', batchDogIds)
+          allDogDetails.push(...batchDogDetails)
+        }
+  
+        dogs.value = await locationStore.enrichDogsWithLocations(allDogDetails)
+        totalDogs.value = allDogDetails.length
+  
+        return {
+          dogs: dogs.value,
+          total: totalDogs.value,
+          next: null,
+          prev: null,
+          currentPage: currentPage.value,
+          noResults: false
+        }
       }
-      
+  
       const searchResults = await api.get<{ 
         resultIds: string[], 
         total: number, 
         next?: string, 
         prev?: string 
       }>(`/dogs/search?${searchParams.toString()}`)
- 
+  
       if (!searchResults.resultIds?.length) {
         return createEmptySearchResults()
       }
-
-      const dogDetails = await api.post<Dog[]>('/dogs', searchResults.resultIds)
-
-      dogs.value = await locationStore.enrichDogsWithLocations(dogDetails)
+  
+      let allDogDetails: Dog[] = []
+      const uniqueDogIds = [...new Set(searchResults.resultIds)]
+      
+      for (let i = 0; i < uniqueDogIds.length; i += 100) {
+        const batchDogIds = uniqueDogIds.slice(i, i + 100)
+        const batchDogDetails = await api.post<Dog[]>('/dogs', batchDogIds)
+        allDogDetails.push(...batchDogDetails)
+      }
+  
+      dogs.value = await locationStore.enrichDogsWithLocations(allDogDetails)
       totalDogs.value = searchResults.total
-
+  
       return {
         dogs: dogs.value,
         total: totalDogs.value,
@@ -122,6 +143,7 @@ export const useDogStore = defineStore('dog', () => {
         currentPage: currentPage.value,
         noResults: false
       }
+  
     } catch (error) {
       console.error('Error searching dogs:', error)
       return createEmptySearchResults()
