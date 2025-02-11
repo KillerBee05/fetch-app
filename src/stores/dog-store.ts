@@ -100,7 +100,7 @@ export const useDogStore = defineStore('dog', () => {
   
         const uniqueDogIds = [...new Set(allDogIds)]
         const total = uniqueDogIds.length
-  
+
         const startIndex = ((params?.page || 1) - 1) * pageSize
         const endIndex = startIndex + pageSize
         const paginatedDogIds = uniqueDogIds.slice(startIndex, endIndex)
@@ -132,7 +132,7 @@ export const useDogStore = defineStore('dog', () => {
           noResults: false
         }
       }
-  
+      
       const searchResults = await api.get<{ 
         resultIds: string[], 
         total: number, 

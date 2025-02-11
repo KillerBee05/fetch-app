@@ -245,7 +245,6 @@ const handleCityChange = () => {
 }
 
 const handleSort = (field: 'name' | 'breed' | 'age') => {
-  console.log('Sort clicked:', { field, currentSort: sortField.value, currentOrder: sortOrder.value })
   if (sortField.value === field) {
     if (sortOrder.value === 'desc') {
       sortField.value = null
@@ -264,12 +263,6 @@ const handleSort = (field: 'name' | 'breed' | 'age') => {
 const fetchDogs = async (page?: number) => {
   isLoading.value = true
   try {
-    console.log('Fetching dogs with params:', {
-      breed: selectedBreed.value,
-      state: selectedState.value,
-      sortField: sortField.value,
-      sortOrder: sortOrder.value
-    })
     const results = await dogStore.searchDogs({
       breeds: selectedBreed.value ? [selectedBreed.value] : undefined,
       ageMin: ageMin.value ?? undefined,
