@@ -1,38 +1,43 @@
 <template>
   <div class="container mx-auto p-4">
+    <Toast /> 
     <h2 class="text-2xl font-bold mb-6">Dog Search</h2>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      <div class="relative">
-        <Dropdown 
-          v-model="selectedState" 
-          :options="availableStates" 
-          optionLabel="name"
-          optionValue="abbreviation"
-          placeholder="Select State (Optional)"
-          class="w-full"
-          @change="handleStateChange"
-        />
+      <div class="relative flex items-center">
+        <div class="flex-1">
+          <Dropdown 
+            v-model="selectedState" 
+            :options="availableStates" 
+            optionLabel="name"
+            optionValue="abbreviation"
+            placeholder="Select State (Optional)"
+            class="w-full"
+            @change="handleStateChange"
+          />
+        </div>
         <Button 
           v-if="selectedState" 
           icon="pi pi-times" 
-          class="p-button-text absolute right-8 top-1/2 transform -translate-y-1/2"
+          class="p-button-text ml-2"
           @click="clearState"
         />
       </div>
-      <div class="relative">
-        <Dropdown
-          v-model="selectedCity"
-          :options="availableCities"
-          placeholder="Select City (Optional)"
-          class="w-full"
-          :disabled="!selectedState"
-          @change="handleCityChange"
-        />
+      <div class="relative flex items-center">
+        <div class="flex-1">
+          <Dropdown
+            v-model="selectedCity"
+            :options="availableCities"
+            placeholder="Select City (Optional)"
+            class="w-full"
+            :disabled="!selectedState"
+            @change="handleCityChange"
+          />
+        </div>
         <Button 
           v-if="selectedCity" 
           icon="pi pi-times" 
-          class="p-button-text absolute right-8 top-1/2 transform -translate-y-1/2"
+          class="p-button-text ml-2"
           @click="clearCity"
         />
       </div>
@@ -41,17 +46,19 @@
     <div class="border rounded-lg p-4 mb-6 bg-gray-50">
       <h3 class="text-lg font-semibold mb-4">Additional Filters</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="relative">
-          <Dropdown 
-            v-model="selectedBreed" 
-            :options="dogStore.breeds" 
-            placeholder="Select Breed"
-            class="w-full"
-          />
+        <div class="relative flex items-center">
+          <div class="flex-1">
+            <Dropdown 
+              v-model="selectedBreed" 
+              :options="dogStore.breeds" 
+              placeholder="Select Breed"
+              class="w-full"
+            />
+          </div>
           <Button 
             v-if="selectedBreed" 
             icon="pi pi-times" 
-            class="p-button-text absolute right-8 top-1/2 transform -translate-y-1/2"
+            class="p-button-text ml-2"
             @click="clearBreed"
           />
         </div>
@@ -131,6 +138,13 @@
             :key="dog.id" 
             class="border rounded-lg p-4 shadow-md"
           >
+            <Button
+              :icon="userStore.isFavorite(dog.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"
+              class="p-button-rounded p-button-text absolute top-2 right-2"
+              :class="{ 'text-red-500': userStore.isFavorite(dog.id) }"
+              @click="toggleFavorite(dog)"
+              :disabled="!userStore.isFavorite(dog.id) && userStore.favorites.length >= 11"
+            />
             <img 
               :src="dog.img" 
               :alt="dog.name" 
@@ -167,15 +181,19 @@
 import { ref, onMounted, computed } from 'vue'
 import { useDogStore } from '@/stores/dog-store'
 import { useLocationStore } from '@/stores/location-store'
+import { useUserStore } from '@/stores/user-store'
 import Dropdown from 'primevue/dropdown'
 import InputNumber from 'primevue/inputnumber'
 import Button from 'primevue/button'
 import DataView from 'primevue/dataview'
 import Paginator from 'primevue/paginator'
 import ProgressSpinner from 'primevue/progressspinner'
+import { useToast } from 'primevue/usetoast'
 
+const toast = useToast()
 const dogStore = useDogStore()
 const locationStore = useLocationStore()
+const userStore = useUserStore()
 
 const selectedBreed = ref<string | null>(null)
 const selectedState = ref<string | null>(null)
@@ -206,6 +224,10 @@ const getNoResultsMessage = () => {
     return `No ${selectedBreed.value} dogs found`
   }
   return 'No dogs found matching your criteria'
+}
+
+const applyFilters = () => {
+  fetchDogs()
 }
 
 const clearBreed = () => {
@@ -260,6 +282,24 @@ const handleSort = (field: 'name' | 'breed' | 'age') => {
   fetchDogs()
 }
 
+const toggleFavorite = (dog: Dog) => {
+  try {
+    if (userStore.isFavorite(dog.id)) {
+      userStore.removeFavorite(dog.id)
+    } else {
+      userStore.addFavorite(dog)
+    }
+  } catch (error) {
+    // If you're using PrimeVue Toast
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Maximum of 10 favorites allowed',
+      life: 3000
+    })
+  }
+}
+
 const fetchDogs = async (page?: number) => {
   isLoading.value = true
   try {
@@ -285,10 +325,6 @@ const fetchDogs = async (page?: number) => {
   } finally {
     isLoading.value = false
   }
-}
-
-const applyFilters = () => {
-  fetchDogs()
 }
 
 onMounted(async () => {

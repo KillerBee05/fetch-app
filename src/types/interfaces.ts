@@ -1,13 +1,21 @@
 import type { ComputedRef, Ref } from 'vue'
 
+export interface LoginResponse {
+  data: {
+    token?: string;
+  }
+}
+
 export interface UserStore {
+  isLoading: boolean
   name: string
   email: string
-  isLoading: boolean
+  favorites: Dog[]
+  addFavorite: (dog: Dog) => void
+  removeFavorite: (id: string) => void
+  isFavorite: (id: string) => boolean
   login: (name: string, email: string) => Promise<any>
   logout: () => void
-  addFavorite: (dog: Dog) => void
-  removeFavorite: (dogId: string) => void
 }
 
 export interface Dog {
