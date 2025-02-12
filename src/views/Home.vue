@@ -166,7 +166,7 @@
             </div>
 
             <div class="p-6 space-y-4 bg-gray-100 rounded-b-2xl">
-              <div class="bg-white rounded-xl shadow-lg p-6">
+              <div class="bg-white rounded-xl shadow-lg lg:p-6 p-4">
                 <h3 class="text-2xl font-bold text-gray-900 text-center border-b border-gray-100 pb-3 mb-4">
                   {{ dog.name }}
                 </h3>
@@ -195,7 +195,7 @@
                 <Button
                   :label="userStore.isFavorite(dog.id) ? 'Remove Favorite' : 'Add to Favorite'"
                   :icon="userStore.isFavorite(dog.id) ? 'pi pi-trash' : 'pi pi-heart'"
-                  class="p-button-help p-button-rounded w-1/2"
+                  class="p-button-help p-button-rounded w-3/4"
                   :disabled="!userStore.isFavorite(dog.id) && userStore.favorites.length >= 11"
                   @click="toggleFavorite(dog)"
                 />
@@ -217,7 +217,7 @@
       :rows="25" 
       :totalRecords="dogStore.totalDogs"
       @page="event => fetchDogs(event.page)"
-      class="mt-6"
+      class="mt-6 lg:mx-0 -mx-6"
     />
   </div>
 </template>
@@ -345,8 +345,18 @@ const toggleFavorite = (dog: Dog) => {
   }
 }
 
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  })
+}
+
 const fetchDogs = async (page?: number) => {
   isLoading.value = true
+  if(page !== undefined){
+    scrollToTop()
+  }
   try {
     const results = await dogStore.searchDogs({
       breeds: selectedBreed.value ? [selectedBreed.value] : undefined,

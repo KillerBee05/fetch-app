@@ -86,7 +86,7 @@
           </div>
 
           <div class="p-6 space-y-4 bg-gray-100 rounded-b-2xl">
-            <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="bg-white rounded-xl shadow-lg lg:p-6 p-4">
               <h3 class="text-2xl font-bold text-gray-900 text-center border-b border-gray-100 pb-3 mb-4">
                 {{ dog.name }}
               </h3>
@@ -117,7 +117,7 @@
               <Button
                 label="Remove Favorite"
                 icon="pi pi-trash"
-                class="p-button-help p-button-rounded w-1/2"
+                class="p-button-help p-button-rounded w-3/4"
                 @click="toggleFavorite(dog)"
               />
             </div>
