@@ -77,11 +77,15 @@ export interface DogStore {
 
 export interface LocationStore {
   isLoading: Ref<boolean>
+  selectedState: Ref<string>
   locationCache: Ref<Map<string, { cities: string[], zipCodes: string[] }>>
   getAvailableStates: ComputedRef<{ name: string; abbreviation: string }[]>
-  getAvailableCitiesForState: (state: string) => Promise<string[]>
+  getAvailableCitiesForState: ComputedRef<string[]>
+  searchLocations: (params: { state?: string, city?: string }) => Promise<{
+    zipCodes: string[]
+    cities: string[]
+  }>
   enrichDogsWithLocations: (dogs: Dog[]) => Promise<(Dog & { city: string; state: string })[]>
-  searchLocations: (params: LocationSearchParams) => Promise<LocationSearchResult>
 }
 
 export interface LocationSearchParams {

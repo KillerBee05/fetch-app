@@ -13,7 +13,7 @@
       <div class="w-[640px] h-[660px]">
         <Card class="shadow-lg overflow-hidden bg-blue-50">
           <template #header>
-            <div class="relative">
+            <div class="relative" data-cy="match-header">
               <img 
                 :src="userStore.match.img" 
                 :alt="userStore.match.name"
@@ -28,7 +28,7 @@
           </template>
 
           <template #content>
-            <div class="space-y-6 p-2">
+            <div class="space-y-6 p-2" data-cy="match-details">
               <div class="grid grid-cols-2 gap-6">
                 <div class="bg-white p-4 rounded-lg shadow-sm">
                   <h3 class="font-semibold text-gray-500 mb-2">Breed</h3>
@@ -65,15 +65,13 @@
       </div>
     </div>
 
-    <!-- Loading State -->
     <div v-else-if="isGeneratingMatch" class="text-center py-8">
-      <ProgressSpinner />
+      <ProgressSpinner data-cy="loading-spinner"/>
       <p class="mt-4 text-gray-600">Finding your perfect match...</p>
     </div>
 
-    <!-- Favorites List -->
     <div v-else>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-cy="favorites-grid">
         <div 
           v-for="dog in userStore.favorites" 
           :key="dog.id" 
@@ -131,7 +129,8 @@
         <i class="pi pi-heart text-4xl mb-4"></i>
         <p>You haven't added any favorites yet.</p>
         <RouterLink to="/" custom v-slot="{ navigate }">
-          <Button 
+          <Button
+            data-cy="browse-dogs-button"
             label="Browse Dogs" 
             icon="pi pi-search"
             class="p-button-outlined p-button-info mt-4"

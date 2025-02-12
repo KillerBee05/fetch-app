@@ -28,7 +28,7 @@
         </div>
 
         <div class="flex justify-center mt-8">
-          <Button label="Login" type="submit" class="w-full" />
+          <Button label="Login" type="submit" class="w-full p-button-info" />
         </div>
       </form>
     </div>

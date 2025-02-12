@@ -1,9 +1,21 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["./e2e/**/*", "./support/**/*"],
+  "include": [
+    "./e2e/**/*", 
+    "./support/**/*", 
+    "**/*.ts",
+    "../src/types/**/*"  // Include your src types
+  ],
   "exclude": ["./support/component.*"],
   "compilerOptions": {
     "isolatedModules": false,
-    "types": ["cypress"]
+    "types": ["cypress"],
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "noEmit": true
   }
 }
