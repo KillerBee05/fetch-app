@@ -17,15 +17,26 @@ export default defineConfig({
     host: '0.0.0.0'
   },
   preview: {
-    allowedHosts: [
-      'fetch-0ql69.kinsta.app'
-    ],
     port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
     host: '0.0.0.0'
   },
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    sourcemap: false
+    sourcemap: false,
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 1000,
+    // Optimize chunk splitting
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        }
+      }
+    },
+    // Add memory-related optimizations
+    target: ['es2020', 'edge88', 'firefox86', 'chrome87', 'safari14']
   }
 })

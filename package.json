@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --build && vite build",
+    "build": "vue-tsc --build && NODE_OPTIONS=--max_old_space_size=4096 vite build",
     "preview": "vite preview",
-    "start": "npm run build && vite preview --host 0.0.0.0 --port ${PORT:-3000} --base=/",
+    "start": "NODE_OPTIONS=--max_old_space_size=4096 npm run build && vite preview --host 0.0.0.0 --port ${PORT:-3000} --base=/",
     "test:unit": "vitest",
     "test:e2e": "start-server-and-test preview http://localhost:3000 'cypress run --e2e'",
     "test:e2e:dev": "start-server-and-test 'vite dev --port 3000' http://localhost:3000 'cypress open --e2e'",
-    "type-check": "vue-tsc --build"
+    "type-check": "vue-tsc --build",
+    "clean": "rm -rf dist node_modules/.vite"
   },
   "dependencies": {
     "@primevue/auto-import-resolver": "^4.2.5",
@@ -46,5 +47,9 @@
     "vite-plugin-vue-devtools": "^7.7.0",
     "vitest": "^3.0.2",
     "vue-tsc": "^2.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }
