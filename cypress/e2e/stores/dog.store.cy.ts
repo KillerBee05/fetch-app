@@ -118,21 +118,44 @@ describe('Dog Store', () => {
 
   describe('Dog Search', () => {
     beforeEach(() => {
-      // Mock dog search endpoint
-      cy.intercept('GET', '**/dogs/search*', {
-        statusCode: 200,
-        body: {
-          resultIds: ['dog1', 'dog2'],
-          total: 2,
-          next: '2',
-          prev: null
-        }
+      // Mock dog search endpoint with dynamic sorting
+      cy.intercept('GET', '**/dogs/search*', (req) => {
+        // Get sort parameters from URL
+        const url = new URL(req.url)
+        const sort = url.searchParams.get('sort')
+        const [field, order] = (sort || 'breed:asc').split(':')
+        
+        // Sort dog IDs based on sort parameters
+        const sortedDogs = [...testDogs].sort((a, b) => {
+          const aVal = String(a[field as keyof typeof a])
+          const bVal = String(b[field as keyof typeof b])
+          return order === 'asc' ? 
+            aVal.localeCompare(bVal) : 
+            bVal.localeCompare(aVal)
+        })
+        
+        req.reply({
+          statusCode: 200,
+          body: {
+            resultIds: sortedDogs.map(dog => dog.id),
+            total: 2,
+            next: '2',
+            prev: null
+          }
+        })
       }).as('dogSearch')
 
-      // Mock dog details endpoint
-      cy.intercept('POST', '**/dogs', {
-        statusCode: 200,
-        body: testDogs
+      // Mock dog details endpoint with sorting preservation
+      cy.intercept('POST', '**/dogs', (req) => {
+        const requestedIds = req.body as string[]
+        const orderedDogs = requestedIds.map(id => 
+          testDogs.find(dog => dog.id === id)
+        ).filter(Boolean)
+        
+        req.reply({
+          statusCode: 200,
+          body: orderedDogs
+        })
       }).as('dogDetails')
 
       // Mock location details endpoint
@@ -184,6 +207,33 @@ describe('Dog Store', () => {
         results.dogs.forEach(dog => {
           expect(dog.age).to.be.within(2, 3)
         })
+      })
+    })
+
+    it('should handle sorting', () => {
+      cy.window().then(async (win) => {
+        const store = win.$store.dog
+        
+        // Default sort by breed ascending
+        const initialResults = await store.searchDogs()
+        const initialBreeds = initialResults.dogs.map(dog => dog.breed)
+        expect(initialBreeds[0]).to.equal('Labrador')
+        
+        // First click - name ascending
+        const resultsNameAsc = await store.searchDogs({ 
+          sortField: 'name', 
+          sortOrder: 'asc' 
+        })
+        const namesAsc = resultsNameAsc.dogs.map(dog => dog.name)
+        expect(namesAsc[0]).to.equal('Bella')
+        
+        // Second click - name descending
+        const resultsNameDesc = await store.searchDogs({ 
+          sortField: 'name', 
+          sortOrder: 'desc' 
+        })
+        const namesDesc = resultsNameDesc.dogs.map(dog => dog.name)
+        expect(namesDesc[0]).to.equal('Max')
       })
     })
 
