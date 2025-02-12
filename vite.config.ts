@@ -18,7 +18,8 @@ export default defineConfig({
   },
   preview: {
     port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
-    host: '0.0.0.0'
+    host: '0.0.0.0',
+    allowedHosts: ['fetch-0ql69.kinsta.app']
   },
   build: {
     outDir: 'dist',
