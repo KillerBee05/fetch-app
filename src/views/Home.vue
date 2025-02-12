@@ -125,7 +125,7 @@
       </div>
       
       <RouterLink 
-        v-if="userStore.favorites.length"
+        v-if="userStore.favorites.length > 1"
         to="/match" 
         custom 
         v-slot="{ navigate }"
@@ -234,6 +234,7 @@ import DataView from 'primevue/dataview'
 import Paginator from 'primevue/paginator'
 import ProgressSpinner from 'primevue/progressspinner'
 import { useToast } from 'primevue/usetoast'
+import type { Dog } from '@/types/interfaces'
 
 const toast = useToast()
 const dogStore = useDogStore()
