@@ -17,6 +17,9 @@ export default defineConfig({
     host: '0.0.0.0' // Important for deployment
   },
   preview: {
+    allowedHosts: [
+      'fetch-0ql69.kinsta.app'
+    ],
     port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
     host: '0.0.0.0' // Important for deployment
   }
