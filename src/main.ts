@@ -3,6 +3,7 @@ import "primeicons/primeicons.css";
 
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import PrimeVue from 'primevue/config';
 import App from './App.vue';
 import router from './router';
@@ -22,8 +23,10 @@ import ToggleButton from 'primevue/togglebutton';
 import SelectButton from 'primevue/selectbutton'
 import AutoComplete from 'primevue/autocomplete';
 import Chip from 'primevue/chip';
-
 import Aura from '@primevue/themes/aura';
+
+const pinia = createPinia()
+pinia.use(piniaPluginPersistedstate)
 
 const app = createApp(App);
 
@@ -38,7 +41,7 @@ app.component('Button', Button);
 app.component('InputText', InputText);
 app.component('Password', Password);
 app.component('Toast', Toast);
-app.component('SelectButton', SelectButton)
+app.component('SelectButton', SelectButton);
 app.component('Chip', Chip);
 
 app.component('MultiSelect', MultiSelect);
@@ -49,7 +52,7 @@ app.component('Paginator', Paginator);
 app.component('ToggleButton', ToggleButton);
 app.component('AutoComplete', AutoComplete); 
 
-app.use(createPinia());
+app.use(pinia);
 app.use(router);
 
 app.mount('#app');

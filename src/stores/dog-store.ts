@@ -27,7 +27,7 @@ export const useDogStore = defineStore('dog', () => {
   const buildSearchParams = (params?: SearchParams): URLSearchParams => {
     const searchParams = new URLSearchParams()
     
-    searchParams.append('size', String(params?.size || 20))
+    searchParams.append('size', String(params?.size || 18))
     
     if (params?.sortField) {
       searchParams.append('sort', `${params.sortField}:${params.sortOrder || 'asc'}`)
@@ -48,7 +48,7 @@ export const useDogStore = defineStore('dog', () => {
 
     if (params?.page) {
       currentPage.value = Math.max(1, params.page)
-      searchParams.append('from', String((currentPage.value - 1) * (params?.size || 20)))
+      searchParams.append('from', String((currentPage.value - 1) * (params?.size || 18)))
     }
 
     return searchParams
@@ -58,7 +58,7 @@ export const useDogStore = defineStore('dog', () => {
     isLoading.value = true
     try {
       const searchParams = buildSearchParams(params)
-      const pageSize = params?.size || 20
+      const pageSize = params?.size || 18
       
       if (params?.state || params?.city) {
         return await handleLocationBasedSearch(params, searchParams, pageSize)

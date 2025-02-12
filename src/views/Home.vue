@@ -93,33 +93,52 @@
             label="Apply Filters" 
             icon="pi pi-filter"
             @click="applyFilters"
-            class="p-button-primary"
+            class="p-button-info"
           />
         </div>
       </div>
     </div>
 
-    <div class="flex flex-wrap gap-4 mb-6 items-center">
-      <span class="font-medium">Sort by:</span>
-      <div class="flex gap-2">
-        <Button 
-          :label="getSortLabel('name')"
-          :class="{ 'p-button-outlined': sortField !== 'name' }"
-          @click="handleSort('name')"
-        />
-        <Button 
-          :label="getSortLabel('breed')"
-          :class="{ 'p-button-outlined': sortField !== 'breed' }"
-          @click="handleSort('breed')"
-        />
-        <Button 
-          :label="getSortLabel('age')"
-          :class="{ 'p-button-outlined': sortField !== 'age' }"
-          @click="handleSort('age')"
-        />
+    <div class="flex flex-wrap gap-4 mb-6 items-center justify-between w-full">
+      <div class="flex items-center gap-4">
+        <span class="font-medium">Sort by:</span>
+        <div class="flex gap-2">
+          <Button 
+            :label="getSortLabel('name')"
+            class="p-button-info"
+            :class="{ 'p-button-outlined': sortField !== 'name' }"
+            @click="handleSort('name')"
+          />
+          <Button 
+            :label="getSortLabel('breed')"
+            class="p-button-info"
+            :class="{ 'p-button-outlined': sortField !== 'breed' }"
+            @click="handleSort('breed')"
+          />
+          <Button 
+            :label="getSortLabel('age')"
+            class="p-button-info"
+            :class="{ 'p-button-outlined': sortField !== 'age' }"
+            @click="handleSort('age')"
+          />
+        </div>
       </div>
+      
+      <RouterLink 
+        v-if="userStore.favorites.length"
+        to="/match" 
+        custom 
+        v-slot="{ navigate }"
+      >
+        <Button
+          label="Find a Match"
+          icon="pi pi-heart"
+          class="p-button-info"
+          @click="navigate"
+        />
+      </RouterLink>
     </div>
-    
+  
     <div v-if="isLoading" class="text-center text-gray-500 mt-6">
       <ProgressSpinner />
       <p class="mt-2">Loading dogs...</p>
@@ -132,29 +151,55 @@
       layout="grid"
     >
       <template #grid>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div 
             v-for="dog in dogStore.dogs" 
             :key="dog.id" 
-            class="border rounded-lg p-4 shadow-md"
+            class="rounded-2xl shadow-lg overflow-hidden"
           >
-            <Button
-              :icon="userStore.isFavorite(dog.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"
-              class="p-button-rounded p-button-text absolute top-2 right-2"
-              :class="{ 'text-red-500': userStore.isFavorite(dog.id) }"
-              @click="toggleFavorite(dog)"
-              :disabled="!userStore.isFavorite(dog.id) && userStore.favorites.length >= 11"
-            />
-            <img 
-              :src="dog.img" 
-              :alt="dog.name" 
-              class="w-full h-48 object-cover rounded-lg mb-4"
-            />
-            <div class="space-y-2">
-              <h3 class="text-xl font-bold">{{ dog.name }}</h3>
-              <p>Breed: {{ dog.breed }}</p>
-              <p>Age: {{ dog.age }} years</p>
-              <p>Location: {{ dog.city }}, {{ dog.state }}, <br> {{ dog.zip_code }}</p>
+            <div class="relative bg-white p-2 rounded-t-3xl">
+              <img 
+                :src="dog.img" 
+                :alt="dog.name" 
+                class="w-full h-56 object-cover rounded-t-2xl"
+              />
+            </div>
+
+            <div class="p-6 space-y-4 bg-gray-100 rounded-b-2xl">
+              <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-2xl font-bold text-gray-900 text-center border-b border-gray-100 pb-3 mb-4">
+                  {{ dog.name }}
+                </h3>
+                
+                <div class="space-y-4">
+                  <div class="flex items-baseline gap-2">
+                    <span class="text-md text-gray-500">Breed</span>
+                    <span class="text-gray-900 font-medium">{{ dog.breed }}</span>
+                  </div>
+
+                  <div class="flex items-baseline gap-2 mt-4">
+                    <span class="text-md text-gray-500">Age</span>
+                    <span class="text-gray-900 font-medium">{{ dog.age }} years</span>
+                  </div>
+                  
+                  <div class="flex items-baseline gap-2 mt-4">
+                    <span class="text-md text-gray-500">Location</span>
+                    <span class="text-gray-900 font-medium">{{ dog.city }}, {{ dog.state }}, {{ dog.zip_code }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="border-t border-gray-300 my-4"></div>
+
+              <div class="flex justify-center">
+                <Button
+                  :label="userStore.isFavorite(dog.id) ? 'Remove Favorite' : 'Add to Favorite'"
+                  :icon="userStore.isFavorite(dog.id) ? 'pi pi-trash' : 'pi pi-heart'"
+                  class="p-button-help p-button-rounded w-1/2"
+                  :disabled="!userStore.isFavorite(dog.id) && userStore.favorites.length >= 11"
+                  @click="toggleFavorite(dog)"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -290,7 +335,6 @@ const toggleFavorite = (dog: Dog) => {
       userStore.addFavorite(dog)
     }
   } catch (error) {
-    // If you're using PrimeVue Toast
     toast.add({
       severity: 'error',
       summary: 'Error',
@@ -310,7 +354,7 @@ const fetchDogs = async (page?: number) => {
       state: selectedState.value ?? undefined,
       city: selectedCity.value ?? undefined,
       page: page ? page + 1 : 1,
-      size: 20,
+      size: 18,
       sortField: sortField.value ?? undefined,
       sortOrder: sortOrder.value
     })
