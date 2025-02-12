@@ -143,14 +143,14 @@ describe('Home View', () => {
     cy.get('button').contains('Apply Filters').click()
     
     // Check for loading spinner and text
-    cy.get('.p-progressspinner').should('be.visible')
+    cy.get('[data-cy="loading-spinner"]').should('be.visible')
     cy.contains('Loading dogs...').should('be.visible')
     
     // Wait for the slow search to complete
     cy.wait('@slowSearch')
     
     // Verify loading state disappears
-    cy.get('.p-progressspinner').should('not.exist')
+    cy.get('[data-cy="loading-spinner"]').should('not.exist')
     cy.contains('Loading dogs...').should('not.exist')
   })
 

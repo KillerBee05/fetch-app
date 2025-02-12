@@ -140,7 +140,7 @@
     </div>
   
     <div v-if="isLoading" class="text-center text-gray-500 mt-6">
-      <ProgressSpinner />
+      <ProgressSpinner data-cy="loading-spinner"/>
       <p class="mt-2">Loading dogs...</p>
     </div>
 
