@@ -26,20 +26,10 @@ npm install
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-npm run test:unit
-```
-
 ### Run End-to-End Tests with [Cypress](https://www.cypress.io/)
-
+```sh
+npx cypress run
+```
 ```sh
 npm run test:e2e:dev
 ```
@@ -53,3 +43,17 @@ But it's still recommended to test the production build with `test:e2e` before d
 npm run build
 npm run test:e2e
 ```
+
+### Safari Browser Compatibility Note
+Safari Issues with Authentication
+The application currently experiences authentication issues with Safari due to its default privacy settings. This is because:
+
+Our login endpoint returns an authentication cookie via the Set-Cookie response header
+The cookie is marked as HttpOnly for security purposes
+Safari's default "Prevent Cross-Site Tracking" setting blocks these third-party cookies
+This prevents the authentication flow from working correctly
+
+Workaround Options:
+
+Use a different browser (Chrome, Firefox, etc.)
+Disable "Prevent Cross-Site Tracking" in Safari's Privacy settings (not recommended for general browsing)
