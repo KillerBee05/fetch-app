@@ -72,7 +72,36 @@ export const useDogStore = defineStore('dog', () => {
       isLoading.value = false
     }
   }
+
+  // If no location selected
+  const handleDirectSearch = async (searchParams: URLSearchParams): Promise<SearchResults> => {
+    const searchResults = await api.get<{ 
+      resultIds: string[], 
+      total: number, 
+      next?: string, 
+      prev?: string 
+    }>(`/dogs/search?${searchParams.toString()}`)
   
+    if (!searchResults.resultIds?.length) {
+      return createEmptySearchResults()
+    }
+  
+    const dogDetails = await api.post<Dog[]>('/dogs', searchResults.resultIds)
+    dogs.value = await locationStore.enrichDogsWithLocations(dogDetails)
+    totalDogs.value = searchResults.total
+  
+    return {
+      dogs: dogs.value,
+      total: totalDogs.value,
+      next: searchResults.next ?? null,
+      prev: searchResults.prev ?? null,
+      currentPage: currentPage.value,
+      noResults: false
+    }
+  }
+
+
+  // If location is selected
   const handleLocationBasedSearch = async (
     params: SearchParams, 
     searchParams: URLSearchParams,
@@ -116,33 +145,8 @@ export const useDogStore = defineStore('dog', () => {
       pageSize
     )
   }
-  
-  const handleDirectSearch = async (searchParams: URLSearchParams): Promise<SearchResults> => {
-    const searchResults = await api.get<{ 
-      resultIds: string[], 
-      total: number, 
-      next?: string, 
-      prev?: string 
-    }>(`/dogs/search?${searchParams.toString()}`)
-  
-    if (!searchResults.resultIds?.length) {
-      return createEmptySearchResults()
-    }
-  
-    const dogDetails = await api.post<Dog[]>('/dogs', searchResults.resultIds)
-    dogs.value = await locationStore.enrichDogsWithLocations(dogDetails)
-    totalDogs.value = searchResults.total
-  
-    return {
-      dogs: dogs.value,
-      total: totalDogs.value,
-      next: searchResults.next ?? null,
-      prev: searchResults.prev ?? null,
-      currentPage: currentPage.value,
-      noResults: false
-    }
-  }
-  
+
+  // Client side pagination when location based search.
   const processAndReturnResults = async (
     uniqueDogIds: string[], 
     params: SearchParams, 

@@ -27,7 +27,6 @@ describe('Match View', () => {
   beforeEach(() => {
     // Clear storage and set up initial state
     cy.clearLocalStorage()
-    indexedDB.deleteDatabase('firebaseLocalStorageDb')
     
     // Set up our initial state
     const initialState = {

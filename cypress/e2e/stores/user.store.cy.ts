@@ -26,7 +26,6 @@ describe('User Store', () => {
 
   beforeEach(() => {
     cy.clearLocalStorage()
-    indexedDB.deleteDatabase('firebaseLocalStorageDb')
   })
 
   it('should handle login successfully', () => {

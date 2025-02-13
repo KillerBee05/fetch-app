@@ -21,7 +21,7 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <nav v-if="showNav" class="p-4 pl-12 flex items-center justify-between border-b border-gray-200">
+  <nav v-if="showNav" class="p-4 lg:pl-12 pl-4 flex items-center justify-between border-b border-gray-200">
     <div class="flex space-x-6 items-center">
       <RouterLink to="/" class="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors">
         <i class="pi pi-home"></i>

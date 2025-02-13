@@ -46,7 +46,6 @@ const testLocations: Location[] = [
 describe('Location Store', () => {
   beforeEach(() => {
     cy.clearLocalStorage()
-    indexedDB.deleteDatabase('firebaseLocalStorageDb')
   
     // Mock both login and breeds endpoints
     cy.intercept('POST', '**/auth/login', {

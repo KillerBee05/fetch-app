@@ -46,7 +46,6 @@ describe('Dog Store', () => {
   beforeEach(() => {
     // Clear local storage and indexed DB
     cy.clearLocalStorage()
-    indexedDB.deleteDatabase('firebaseLocalStorageDb')
   
     // Mock login endpoint
     cy.intercept('POST', '**/auth/login', {
